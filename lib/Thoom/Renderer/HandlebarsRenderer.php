@@ -56,7 +56,7 @@ class HandlebarsRenderer
     {
         $json = json_encode($params);
 
-        $combined = $this->getCombined() . "\n\nvar template = Handlebars.templates['$template']($json);\nconsole.log(template);";
+        $combined = $this->compile() . "\n\nvar template = Handlebars.templates['$template']($json);\nconsole.log(template);";
         return $combined;
     }
 
@@ -65,7 +65,7 @@ class HandlebarsRenderer
         $this->globals[$key] = $val;
     }
 
-    public function getCombined()
+    public function compile()
     {
         if (!$this->app['handlebars.options']['debug'] && is_file($this->app['handlebars.options']['compiled']))
             return file_get_contents($this->app['handlebars.options']['compiled']);
