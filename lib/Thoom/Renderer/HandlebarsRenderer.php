@@ -45,8 +45,9 @@ class HandlebarsRenderer
 
         proc_close($process);
 
-        if ($errors)
-            throw new Exception("Errors rendering Handblebars template: " . $errors);
+        if ($errors) {
+            throw new Exception("Errors rendering Handlebars template: " . $errors);
+        }
 
         return new Response($results, $code);
     }
@@ -81,8 +82,13 @@ class HandlebarsRenderer
 
         $paths = json_encode($requirements);
 
-        $library = file_get_contents($this->app['handlebars.options']['library']);
-        $handle = popen('handlebars ' . $this->app['handlebars.options']['path'] . ' -m', 'r');
+        $templatesCmd = 'handlebars ' . $this->app['handlebars.options']['path'];
+        $minify = $this->app['handlebars.options']['minify'];
+        if ($minify)
+            $templatesCmd .= ' -m';
+
+        $library = str_replace('this.Handlebars', 'Handlebars', file_get_contents($this->app['handlebars.options']['library']));
+        $handle = popen($templatesCmd, 'r');
         $templates = stream_get_contents($handle);
         pclose($handle);
 
@@ -196,6 +202,32 @@ JS;
         $dir = dirname($this->app['handlebars.options']['compiled']);
         if (!file_exists($dir))
             mkdir($dir, 0777, true);
+
+        if ($minify) {
+            $descriptorspec = array(
+                0 => array('pipe', 'r'),
+                1 => array('pipe', 'w'),
+                2 => array('pipe', 'w'),
+            );
+
+            $process = proc_open('uglifyjs', $descriptorspec, $pipes);
+
+            fwrite($pipes[0], $combined);
+            fclose($pipes[0]);
+
+            $results = stream_get_contents($pipes[1]);
+            fclose($pipes[1]);
+
+            $errors = stream_get_contents($pipes[2]);
+            fclose($pipes[2]);
+
+            proc_close($process);
+
+            if ($errors)
+                throw new Exception("Errors minifying Handlebars template: " . $errors);
+
+            $combined = $results;
+        }
 
         file_put_contents($this->app['handlebars.options']['compiled'], $combined);
 

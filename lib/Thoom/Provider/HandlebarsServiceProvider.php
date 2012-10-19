@@ -41,7 +41,8 @@ class HandlebarsServiceProvider implements ServiceProviderInterface
     {
         $defaults = array(
             'debug' => false,
-            'library' => realpath(__DIR__ . '/../../../assets/handlebars.runtime-1.0.0.beta.6.min.js'),
+            'minify' => false,
+            'library' => realpath(__DIR__ . '/../../../assets/handlebars.runtime-1.0.rc.1.js'),
         );
 
         $options = ($app['handlebars.options']) ? array_merge($defaults, $app['handlebars.options']) : $defaults;
