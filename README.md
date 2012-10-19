@@ -34,6 +34,26 @@ As an example:
         )
     ));
 
+To render a server-side template for "index.handlebars":
+
+    $app->get('/', function (Application $app) {
+        return $app['handlebars']->render('index');
+    })->bind('homepage');
+
+To add a global variable (like a user array) to be available to your templates:
+
+    $app['handlebars']->addGlobal('user', $userArray);
+
+To pass data to the template at render time, pass in a array as the second argument:
+
+    $app['handlebars']->render('index', array('foo' => 'fez'));
+
+To return an Http header other than 200, pass in a 3rd argument:
+
+    $app['handlebars']->render('not-found', array('foo' => 'fez'), 404);
+
+__Note:__ *Since the Handlebars templates are run in Javascript, your variables must be available to be used in json_decode.*
+
 ### Server
 
 The template needs a few server cli applications installed in order to work properly.
@@ -79,6 +99,7 @@ In your child template, you would use the {{#override}} and {{extend}} tags:
     {{extend "master"}}
 
 This would print:
+
     <html>
         <head>
             <title>Child Template</title>
