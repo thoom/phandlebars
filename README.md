@@ -99,7 +99,7 @@ To create a master template ('master.handlebars'), use the {{#block}} tag:
 
 In your child template, you would use the {{#override}} and {{extend}} tags:
 
-    {{#override "body}}Child Template{{/override}}
+    {{#override "body"}}Child Template{{/override}}
 
     {{extend "master"}}
 
