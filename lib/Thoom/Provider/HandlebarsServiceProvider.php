@@ -54,10 +54,10 @@ class HandlebarsServiceProvider implements ServiceProviderInterface
 
         $options = ($app['handlebars.options']) ? array_merge($defaults, $app['handlebars.options']) : $defaults;
 
-        if (in_array($app['handlebars.options']['library'], array(self::LIBRARY_FULL, self::LIBRARY_RUNTIME)))
-            $app['handlebars.options']['library.path'] = $app['handlebars.options']['library.' . $app['handlebars.options']['library']];
-        else if (is_file($app['handlebars.options']['library']))
-            $app['handlebars.options']['library.path'] = $app['handlebars.options']['library'];
+        if (in_array($options['library'], array(self::LIBRARY_FULL, self::LIBRARY_RUNTIME)))
+            $options['library.path'] = $options['library.' . $options['library']];
+        else if (is_file($options['library']))
+            $options['library.path'] = $options['library'];
         else
             throw new Exception("Handlebars library not found");
 
