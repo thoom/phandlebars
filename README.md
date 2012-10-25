@@ -15,12 +15,14 @@ There are two parts to the installation: the PHP hooks into your Silex applicati
 
 ### Silex Application
 
-There are only 4 options currently:
+There are these options currently:
 
   1. __compiled__: This is the full file path of where you want the compiled Javascript file to reside. The location should be writable by your web user.
   2. __debug__: If debug is true, then the compiled file will be overwritten with each request. If false, it will only build the compiled file if it doesn't exist.
-  3. __minify__: If true, the script will attempt to minify the file using _uglifyjs_.
-  4. __path__: The directory where all of the Handlebars templates are stored. Note that all of your templates should end with _.handlebars_.
+  3. __library__: By default, the compiled JS file will use the Handlebars runtime library. If you need to use the full library instead
+                  (for instance, if you dynamically compile on the client side), then pass in *HandlebarsServiceProvider::LIBRARY_FULL*.
+  4. __minify__: If true, the script will attempt to minify the file using _uglifyjs_.
+  5. __path__: The directory where all of the Handlebars templates are stored. Note that all of your templates should end with _.handlebars_.
 
 As an example:
 
@@ -35,7 +37,7 @@ As an example:
 
 ### Server
 
-The template needs a few server cli applications installed in order to work properly.
+The provider needs a few server cli applications installed in order to render and compile templates.
 
 #### Node.js
 

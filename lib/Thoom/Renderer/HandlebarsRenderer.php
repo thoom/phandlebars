@@ -25,6 +25,12 @@ class HandlebarsRenderer
 
     public function render($template, $params = array(), $code = 200)
     {
+        if (is_numeric($params))
+            $code = $params;
+
+        if (!is_array($params))
+            $params = array();
+
         $params = array_merge($this->globals, $params);
         $descriptorspec = array(
             0 => array('pipe', 'r'),
@@ -34,7 +40,10 @@ class HandlebarsRenderer
 
         $process = proc_open('node', $descriptorspec, $pipes);
 
-        fwrite($pipes[0], $this->_r($template, $params));
+        $json = json_encode($params);
+        $combined = $this->compile() . "\n\nvar template = Handlebars.templates['$template']($json);\nconsole.log(template);";
+
+        fwrite($pipes[0], $combined);
         fclose($pipes[0]);
 
         $results = stream_get_contents($pipes[1]);
@@ -52,14 +61,6 @@ class HandlebarsRenderer
         return new Response($results, $code);
     }
 
-    protected function _r($template, $params)
-    {
-        $json = json_encode($params);
-
-        $combined = $this->compile() . "\n\nvar template = Handlebars.templates['$template']($json);\nconsole.log(template);";
-        return $combined;
-    }
-
     public function addGlobal($key, $val)
     {
         $this->globals[$key] = $val;
@@ -69,6 +70,17 @@ class HandlebarsRenderer
     {
         if (!$this->app['handlebars.options']['debug'] && is_file($this->app['handlebars.options']['compiled']))
             return file_get_contents($this->app['handlebars.options']['compiled']);
+
+        $library = str_replace('this.Handlebars', 'Handlebars', file_get_contents($this->app['handlebars.options']['library.path']));
+
+        $templatesCmd = 'handlebars ' . $this->app['handlebars.options']['path'];
+        $minify = $this->app['handlebars.options']['minify'];
+        if ($minify)
+            $templatesCmd .= ' -m';
+
+        $handle = popen($templatesCmd, 'r');
+        $templates = stream_get_contents($handle);
+        pclose($handle);
 
         $routes = $this->app['routes']->all();
         $requirements = array();
@@ -81,16 +93,6 @@ class HandlebarsRenderer
         }
 
         $paths = json_encode($requirements);
-
-        $templatesCmd = 'handlebars ' . $this->app['handlebars.options']['path'];
-        $minify = $this->app['handlebars.options']['minify'];
-        if ($minify)
-            $templatesCmd .= ' -m';
-
-        $library = str_replace('this.Handlebars', 'Handlebars', file_get_contents($this->app['handlebars.options']['library']));
-        $handle = popen($templatesCmd, 'r');
-        $templates = stream_get_contents($handle);
-        pclose($handle);
 
         //If not in debug mode, serve this file from cache
         $combined = <<<JS

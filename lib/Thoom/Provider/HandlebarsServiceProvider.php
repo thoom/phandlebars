@@ -12,8 +12,13 @@ namespace Thoom\Provider;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
+use Thoom\Renderer\Exception;
+
 class HandlebarsServiceProvider implements ServiceProviderInterface
 {
+
+    const LIBRARY_FULL = 'full';
+    const LIBRARY_RUNTIME = 'runtime';
 
     /**
      * Registers services on the given app.
@@ -42,14 +47,22 @@ class HandlebarsServiceProvider implements ServiceProviderInterface
         $defaults = array(
             'debug' => false,
             'minify' => false,
-            'library' => realpath(__DIR__ . '/../../../assets/handlebars.runtime-1.0.rc.1.js'),
+            'library' => self::LIBRARY_RUNTIME,
+            'library.runtime' => realpath(__DIR__ . '/../../../assets/handlebars.runtime-1.0.rc.1.js'),
+            'library.full' => realpath(__DIR__ . '/../../../assets/handlebars-1.0.rc.1.js'),
         );
 
         $options = ($app['handlebars.options']) ? array_merge($defaults, $app['handlebars.options']) : $defaults;
 
-        if (!isset($options['compiled'])) {
-            //TODO: Throw an exception
-        }
+        if (in_array($app['handlebars.options']['library'], array(self::LIBRARY_FULL, self::LIBRARY_RUNTIME)))
+            $app['handlebars.options']['library.path'] = $app['handlebars.options']['library.' . $app['handlebars.options']['library']];
+        else if (is_file($app['handlebars.options']['library']))
+            $app['handlebars.options']['library.path'] = $app['handlebars.options']['library'];
+        else
+            throw new Exception("Handlebars library not found");
+
+        if (!isset($options['compiled']))
+            throw new Exception("Handlebars compiled path not set");
 
         $app['handlebars.options'] = $options;
     }
