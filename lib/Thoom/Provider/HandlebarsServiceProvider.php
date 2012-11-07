@@ -17,7 +17,7 @@ use Thoom\Renderer\Exception;
 class HandlebarsServiceProvider implements ServiceProviderInterface
 {
 
-    const LIBRARY_FULL = 'full';
+    const LIBRARY_FULL    = 'full';
     const LIBRARY_RUNTIME = 'runtime';
 
     /**
@@ -30,9 +30,11 @@ class HandlebarsServiceProvider implements ServiceProviderInterface
      */
     public function register(Application $app)
     {
-        $app['handlebars'] = $app->share(function () use ($app) {
-            return new \Thoom\Renderer\HandlebarsRenderer($app);
-        });
+        $app['handlebars'] = $app->share(
+            function () use ($app) {
+                return new \Thoom\Renderer\HandlebarsRenderer($app);
+            }
+        );
     }
 
     /**
@@ -45,24 +47,28 @@ class HandlebarsServiceProvider implements ServiceProviderInterface
     public function boot(Application $app)
     {
         $defaults = array(
-            'debug' => false,
-            'minify' => false,
-            'library' => self::LIBRARY_RUNTIME,
+            'debug'           => false,
+            'minify'          => false,
+            'library'         => self::LIBRARY_RUNTIME,
             'library.runtime' => realpath(__DIR__ . '/../../../assets/handlebars.runtime-1.0.rc.1.js'),
-            'library.full' => realpath(__DIR__ . '/../../../assets/handlebars-1.0.rc.1.js'),
+            'library.full'    => realpath(__DIR__ . '/../../../assets/handlebars-1.0.rc.1.js'),
+            'runtime.minify'  => 'uglifyjs',
+            'runtime.node'    => 'node',
         );
 
         $options = ($app['handlebars.options']) ? array_merge($defaults, $app['handlebars.options']) : $defaults;
 
-        if (in_array($options['library'], array(self::LIBRARY_FULL, self::LIBRARY_RUNTIME)))
-            $options['library.path'] = $options['library.' . $options['library']];
-        else if (is_file($options['library']))
-            $options['library.path'] = $options['library'];
-        else
+        if (in_array($options['library'], array(self::LIBRARY_FULL, self::LIBRARY_RUNTIME))) {
+            $options['path.library'] = $options['library.' . $options['library']];
+        } else if (is_file($options['library'])) {
+            $options['path.library'] = $options['library'];
+        } else {
             throw new Exception("Handlebars library not found");
+        }
 
-        if (!isset($options['compiled']))
-            throw new Exception("Handlebars compiled path not set");
+        if (!isset($options['path.compiled'])) {
+            throw new Exception("Handlebars path.compiled not set");
+        }
 
         $app['handlebars.options'] = $options;
     }

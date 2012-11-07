@@ -19,29 +19,32 @@ class HandlebarsRenderer
 
     public function __construct($app)
     {
-        $this->app = $app;
+        $this->app     = $app;
         $this->globals = array();
     }
 
     public function render($template, $params = array(), $code = 200)
     {
-        if (is_numeric($params))
+        if (is_numeric($params)) {
             $code = $params;
+        }
 
-        if (!is_array($params))
+        if (!is_array($params)) {
             $params = array();
+        }
 
-        $params = array_merge($this->globals, $params);
+        $params         = array_merge($this->globals, $params);
         $descriptorspec = array(
             0 => array('pipe', 'r'),
             1 => array('pipe', 'w'),
             2 => array('pipe', 'w'),
         );
 
-        $process = proc_open('node', $descriptorspec, $pipes);
+        $process = proc_open($this->app['handlebars.options']['runtime.node'], $descriptorspec, $pipes);
 
-        $json = json_encode($params);
-        $combined = $this->compile() . "\n\nvar template = Handlebars.templates['$template']($json);\nconsole.log(template);";
+        $json     = json_encode($params);
+        $combined = $this->compile()
+                . "\n\nvar template = Handlebars.templates['$template']($json);\nconsole.log(template);";
 
         fwrite($pipes[0], $combined);
         fclose($pipes[0]);
@@ -68,26 +71,33 @@ class HandlebarsRenderer
 
     public function compile()
     {
-        if (!$this->app['handlebars.options']['debug'] && is_file($this->app['handlebars.options']['compiled']))
-            return file_get_contents($this->app['handlebars.options']['compiled']);
+        if (!$this->app['handlebars.options']['debug'] && is_file($this->app['handlebars.options']['path.compiled'])) {
+            return file_get_contents($this->app['handlebars.options']['path.compiled']);
+        }
 
-        $library = str_replace('this.Handlebars', 'Handlebars', file_get_contents($this->app['handlebars.options']['library.path']));
+        $library = str_replace(
+            'this.Handlebars',
+            'Handlebars',
+            file_get_contents($this->app['handlebars.options']['path.library'])
+        );
 
-        $templatesCmd = 'handlebars ' . $this->app['handlebars.options']['path'];
-        $minify = $this->app['handlebars.options']['minify'];
-        if ($minify)
+        $templatesCmd = 'handlebars ' . $this->app['handlebars.options']['path.templates'];
+        $minify       = $this->app['handlebars.options']['minify'];
+        if ($minify) {
             $templatesCmd .= ' -m';
+        }
 
-        $handle = popen($templatesCmd, 'r');
+        $handle    = popen($templatesCmd, 'r');
         $templates = stream_get_contents($handle);
         pclose($handle);
 
-        $routes = $this->app['routes']->all();
+        $routes       = $this->app['routes']->all();
         $requirements = array();
 
         foreach ($routes as $key => $route) {
-            if (stripos($key, '_') === 0)
+            if (stripos($key, '_') === 0) {
                 continue;
+            }
 
             $requirements[$key] = $route->getPattern();
         }
@@ -201,9 +211,10 @@ Handlebars.registerHelper('path', function (key, options) {
 });
 JS;
 
-        $dir = dirname($this->app['handlebars.options']['compiled']);
-        if (!file_exists($dir))
+        $dir = dirname($this->app['handlebars.options']['path.compiled']);
+        if (!file_exists($dir)) {
             mkdir($dir, 0777, true);
+        }
 
         if ($minify) {
             $descriptorspec = array(
@@ -212,7 +223,7 @@ JS;
                 2 => array('pipe', 'w'),
             );
 
-            $process = proc_open('uglifyjs', $descriptorspec, $pipes);
+            $process = proc_open($this->app['handlebars.options']['runtime.minify'], $descriptorspec, $pipes);
 
             fwrite($pipes[0], $combined);
             fclose($pipes[0]);
@@ -225,13 +236,14 @@ JS;
 
             proc_close($process);
 
-            if ($errors)
+            if ($errors) {
                 throw new Exception("Errors minifying Handlebars template: " . $errors);
+            }
 
             $combined = $results;
         }
 
-        file_put_contents($this->app['handlebars.options']['compiled'], $combined);
+        file_put_contents($this->app['handlebars.options']['path.compiled'], $combined);
 
         return $combined;
     }

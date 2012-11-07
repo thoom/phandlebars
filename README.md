@@ -17,21 +17,23 @@ There are two parts to the installation: the PHP hooks into your Silex applicati
 
 There are these options currently:
 
-  1. __compiled__: This is the full file path of where you want the compiled Javascript file to reside. The location should be writable by your web user.
-  2. __debug__: If debug is true, then the compiled file will be overwritten with each request. If false, it will only build the compiled file if it doesn't exist.
-  3. __library__: By default, the compiled JS file will use the Handlebars runtime library. If you need to use the full library instead
-                  (for instance, if you dynamically compile on the client side), then pass in *HandlebarsServiceProvider::LIBRARY_FULL*.
-  4. __minify__: If true, the script will attempt to minify the file using _uglifyjs_.
-  5. __path__: The directory where all of the Handlebars templates are stored. Note that all of your templates should end with _.handlebars_.
+  1. __debug__: If debug is true, then the compiled file will be overwritten with each request. If false, it will only build the compiled file if it doesn't exist.
+  1. __library__: By default, the compiled JS file will use the Handlebars runtime library. If you need to use the full library instead
+                  (for instance, if you dynamically compile on the client side), then pass in `HandlebarsServiceProvider::LIBRARY_FULL`.
+  1. __minify__: If true, the script will attempt to minify the file using the `runtime.minify` command.
+  1. __path.compiled__: This is the full file path of where you want the compiled Javascript file to reside. The location should be writable by your web user.
+  1. __path.templates__: The directory where all of the Handlebars templates are stored. Note that all of your templates should end with _.handlebars_.
+  1. __runtime.minify__: If not set, the script will attempt to minify the file using `uglifyjs` command.
+  1. __runtime.node__: If not set, the script will attempt to run node from using `nodejs` command.
 
 As an example:
 
     $app->register(new Thoom\Provider\HandlebarsServiceProvider(), array(
         'handlebars.options' => array(
-            'compiled' => $app['cache_dir'] . '/js/handlebars-compiled.js',
             'debug' => $app['debug'],
             'minify' => true,
-            'path' => __DIR__ . '/templates',
+            'path.compiled' => $app['cache_dir'] . '/js/handlebars-compiled.js',
+            'path.templates' => __DIR__ . '/templates',
         )
     ));
 
@@ -41,9 +43,12 @@ The provider needs a few server cli applications installed in order to render an
 
 #### Node.js
 
-Easy to install using the package manager of your choice. For instance, with ubuntu:
+Easy to install using the package manager of your choice. For instance, with Ubuntu:
 
     $ apt-get install nodejs build-essential
+
+This assumes that your node executable is installed and accessible from `node`. If you need to use a different command,
+change the `runtime.node` configuration option.
 
 #### Handlebars.js
 
@@ -58,10 +63,12 @@ If you want to minify your compiled templates, you'll need to install UglifyJS.
 
     $ npm install -g uglify-js
 
+If you prefer another minifier, note that it just needs to accept data from `STDIN` and outputs to `STDOUT`. To change the
+minifier, change the `runtime.minify` configuration option.
+
+
 To Use
 ------
-
-
 
 ### Silex Application
 
