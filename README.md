@@ -24,7 +24,7 @@ There are these options currently:
   1. __path.compiled__: This is the full file path of where you want the compiled Javascript file to reside. The location should be writable by your web user.
   1. __path.templates__: The directory where all of the Handlebars templates are stored. Note that all of your templates should end with _.handlebars_.
   1. __runtime.minify__: If not set, the script will attempt to minify the file using `uglifyjs` command.
-  1. __runtime.node__: If not set, the script will attempt to run node from using `nodejs` command.
+  1. __runtime.node__: If not set, the script will attempt to run node from using `node` command.
 
 As an example:
 
