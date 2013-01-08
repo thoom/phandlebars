@@ -95,7 +95,7 @@ class HandlebarsRenderer
         );
     }
 
-    protected function client()
+    public function client()
     {
         if (empty($this->app['handlebars.options']['path.compiled.client'])) {
             return '';
