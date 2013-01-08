@@ -66,8 +66,8 @@ class HandlebarsServiceProvider implements ServiceProviderInterface
             throw new Exception("Handlebars library not found");
         }
 
-        if (!isset($options['path.compiled'])) {
-            throw new Exception("Handlebars path.compiled not set");
+        if (!isset($options['path.compiled.server'])) {
+            throw new Exception("Handlebars path.compiled.server not set");
         }
 
         $app['handlebars.options'] = $options;

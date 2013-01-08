@@ -43,7 +43,7 @@ class HandlebarsRenderer
         $process = proc_open($this->app['handlebars.options']['runtime.node'], $descriptorspec, $pipes);
 
         $json     = json_encode($params);
-        $combined = $this->compile()
+        $combined = $this->server()
                 . "\n\nvar template = Handlebars.templates['$template']($json);\nconsole.log(template);";
 
         fwrite($pipes[0], $combined);
@@ -69,27 +69,72 @@ class HandlebarsRenderer
         $this->globals[$key] = $val;
     }
 
-    public function compile()
+    public function server()
     {
-        if (!$this->app['handlebars.options']['debug'] && is_file($this->app['handlebars.options']['path.compiled'])) {
-            return file_get_contents($this->app['handlebars.options']['path.compiled']);
+        if (!$this->app['handlebars.options']['debug'] && is_file(
+            $this->app['handlebars.options']['path.compiled.server']
+        )
+        ) {
+            return file_get_contents($this->app['handlebars.options']['path.compiled.server']);
         }
 
+        $templates = array();
+        if (file_exists($this->app['handlebars.options']['path.templates.server'])) {
+            $templates[] = $this->app['handlebars.options']['path.templates.server'];
+        }
+
+        if (file_exists($this->app['handlebars.options']['path.templates.client'])) {
+            $templates[] = $this->app['handlebars.options']['path.templates.client'];
+        }
+
+        return $this->compiler(
+            $this->app['handlebars.options']['path.compiled.server'],
+            $templates,
+            $this->app['handlebars.options']['library.full'],
+            false
+        );
+    }
+
+    protected function client()
+    {
+        if (empty($this->app['handlebars.options']['path.compiled.client'])) {
+            return '';
+        }
+
+        if (!$this->app['handlebars.options']['debug'] && is_file(
+            $this->app['handlebars.options']['path.compiled.client']
+        )
+        ) {
+            return file_get_contents($this->app['handlebars.options']['path.compiled.client']);
+        }
+
+        return $this->compiler(
+            $this->app['handlebars.options']['path.compiled.client'],
+            array($this->app['handlebars.options']['path.templates.client']),
+            $this->app['handlebars.options']['library'],
+            $this->app['handlebars.options']['minify']
+        );
+    }
+
+    public function compiler($file, $templates, $library, $minify)
+    {
         $library = str_replace(
             'this.Handlebars',
             'Handlebars',
-            file_get_contents($this->app['handlebars.options']['path.library'])
+            file_get_contents($library)
         );
 
-        $templatesCmd = 'handlebars ' . $this->app['handlebars.options']['path.templates'];
-        $minify       = $this->app['handlebars.options']['minify'];
-        if ($minify) {
-            $templatesCmd .= ' -m';
-        }
+        $compiled = '';
+        foreach ($templates as $template) {
+            $templatesCmd = 'handlebars ' . $template;
+            if ($minify) {
+                $templatesCmd .= ' -m';
+            }
 
-        $handle    = popen($templatesCmd, 'r');
-        $templates = stream_get_contents($handle);
-        pclose($handle);
+            $handle = popen($templatesCmd, 'r');
+            $compiled .= stream_get_contents($handle);
+            pclose($handle);
+        }
 
         $routes       = $this->app['routes']->all();
         $requirements = array();
@@ -108,7 +153,7 @@ class HandlebarsRenderer
         $combined = <<<JS
 $library
 
-$templates
+$compiled
 
 Handlebars.loadPartial = function loadPartial(name) {
     var partial = Handlebars.partials[name];
@@ -211,7 +256,7 @@ Handlebars.registerHelper('path', function (key, options) {
 });
 JS;
 
-        $dir = dirname($this->app['handlebars.options']['path.compiled']);
+        $dir = dirname($file);
         if (!file_exists($dir)) {
             mkdir($dir, 0777, true);
         }
@@ -243,7 +288,7 @@ JS;
             $combined = $results;
         }
 
-        file_put_contents($this->app['handlebars.options']['path.compiled'], $combined);
+        file_put_contents($file, $combined);
 
         return $combined;
     }

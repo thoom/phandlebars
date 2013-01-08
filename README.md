@@ -21,9 +21,11 @@ There are these options currently:
   1. __library__: By default, the compiled JS file will use the Handlebars runtime library. If you need to use the full library instead
                   (for instance, if you dynamically compile on the client side), then pass in `HandlebarsServiceProvider::LIBRARY_FULL`.
   1. __minify__: If true, the script will attempt to minify the file using the `runtime.minify` command.
-  1. __path.compiled__: This is the full file path of where you want the compiled Javascript file to reside. The location should be writable by your web user.
-  1. __path.templates__: The directory where all of the Handlebars templates are stored. Note that all of your templates should end with _.handlebars_.
-  1. __runtime.minify__: If not set, the script will attempt to minify the file using `uglifyjs` command.
+  1. __path.compiled.client__: This is the full file path of where you want the compiled client-only Javascript file to reside. The location should be writable by your web user.
+  1. __path.compiled.server__: This is the full file path of where you want the server compiled Javascript file to reside.
+  1. __path.templates.client__: The directory where all of the client-only Handlebars templates are stored. Note that all of your templates should end with _.handlebars_.
+  1. __path.templates.server__: The directory where all of the server-only Handlebars templates are stored. Note that all of your templates should end with _.handlebars_.
+  1. __runtime.minify__: If not set, the script will attempt to minify the client file using `uglifyjs` command.
   1. __runtime.node__: If not set, the script will attempt to run node from using `node` command.
 
 As an example:
@@ -32,8 +34,10 @@ As an example:
         'handlebars.options' => array(
             'debug' => $app['debug'],
             'minify' => true,
-            'path.compiled' => $app['cache_dir'] . '/js/handlebars-compiled.js',
-            'path.templates' => __DIR__ . '/templates',
+            'path.compiled.client' => $app['cache_dir'] . '/js/handlebars-compiled.js',
+            'path.compiled.server' => $app['cache_dir'] . '/compiled.js',
+            'path.templates.client' => __DIR__ . '/templates/client',
+            'path.templates.server' => __DIR__ . '/templates/server',
         )
     ));
 
@@ -76,7 +80,11 @@ To Use
 
 You may wish to precompile the script. This can be accomplished by calling the renderer from your application using the following command:
 
-    $app['handlebars']->compile();
+    $app['handlebars']->server();
+
+To precompile handlebars for client only scripts:
+
+    $app['handlebars']->client();
 
 #### Server-side rendering
 
