@@ -9,17 +9,18 @@
 
 namespace Thoom\Renderer;
 
-
 use Symfony\Component\HttpFoundation\Response;
 
 class HandlebarsRenderer
 {
     protected $app;
+    protected $options;
     protected $globals;
 
     public function __construct($app)
     {
         $this->app     = $app;
+        $this->options = $this->app['handlebars.options'];
         $this->globals = array();
     }
 
@@ -40,7 +41,7 @@ class HandlebarsRenderer
             2 => array('pipe', 'w'),
         );
 
-        $process = proc_open($this->app['handlebars.options']['runtime.node'], $descriptorspec, $pipes);
+        $process = proc_open($this->options['runtime.node'], $descriptorspec, $pipes);
 
         $json     = json_encode($params);
         $combined = $this->server()
@@ -71,48 +72,45 @@ class HandlebarsRenderer
 
     public function server()
     {
-        if (!$this->app['handlebars.options']['debug'] && is_file(
-            $this->app['handlebars.options']['path.compiled.server']
-        )
-        ) {
-            return file_get_contents($this->app['handlebars.options']['path.compiled.server']);
+        if (!$this->options['debug'] && is_file($this->options['path.compiled.server'])) {
+            return file_get_contents($this->options['path.compiled.server']);
         }
 
         $templates = array();
-        if (file_exists($this->app['handlebars.options']['path.templates.server'])) {
-            $templates[] = $this->app['handlebars.options']['path.templates.server'];
+        if (file_exists($this->options['path.templates.server'])) {
+            $templates[] = $this->options['path.templates.server'];
         }
 
-        if (file_exists($this->app['handlebars.options']['path.templates.client'])) {
-            $templates[] = $this->app['handlebars.options']['path.templates.client'];
+        if (file_exists($this->options['path.templates.client'])) {
+            $templates[] = $this->options['path.templates.client'];
         }
 
         return $this->compiler(
-            $this->app['handlebars.options']['path.compiled.server'],
+            $this->options['path.compiled.server'],
             $templates,
-            $this->app['handlebars.options']['library.full'],
+            $this->options['library.full'],
             false
         );
     }
 
     public function client()
     {
-        if (empty($this->app['handlebars.options']['path.compiled.client'])) {
+        if (empty($this->options['path.compiled.client'])) {
             return '';
         }
 
-        if (!$this->app['handlebars.options']['debug'] && is_file(
-            $this->app['handlebars.options']['path.compiled.client']
+        if (!$this->options['debug'] && is_file(
+            $this->options['path.compiled.client']
         )
         ) {
-            return file_get_contents($this->app['handlebars.options']['path.compiled.client']);
+            return file_get_contents($this->options['path.compiled.client']);
         }
 
         return $this->compiler(
-            $this->app['handlebars.options']['path.compiled.client'],
-            array($this->app['handlebars.options']['path.templates.client']),
-            $this->app['handlebars.options']['library'],
-            $this->app['handlebars.options']['minify']
+            $this->options['path.compiled.client'],
+            array($this->options['path.templates.client']),
+            $this->options['path.library'],
+            $this->options['minify']
         );
     }
 
@@ -268,7 +266,7 @@ JS;
                 2 => array('pipe', 'w'),
             );
 
-            $process = proc_open($this->app['handlebars.options']['runtime.minify'], $descriptorspec, $pipes);
+            $process = proc_open($this->options['runtime.minify'], $descriptorspec, $pipes);
 
             fwrite($pipes[0], $combined);
             fclose($pipes[0]);
