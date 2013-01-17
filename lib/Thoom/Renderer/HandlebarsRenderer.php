@@ -89,7 +89,7 @@ class HandlebarsRenderer
             $this->options['path.compiled.server'],
             $templates,
             $this->options['library.full'],
-            false
+            $this->options['minify']
         );
     }
 
