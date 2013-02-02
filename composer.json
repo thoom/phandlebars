@@ -3,7 +3,7 @@
     "description":"Handlebars.js based templating engine for the Silex framework",
     "type":"library",
     "keywords":["templates", "silex"],
-    "homepage":"https://github.com/thoom/Phandlebars",
+    "homepage":"https://github.com/thoom/phandlebars",
     "license":"MIT",
     "require":{
         "php":">=5.3.2"
